@@ -1,0 +1,12 @@
+{
+  "name": "wallet-platform",
+  "private": true,
+  "description": "Wallet backend platform: indexer + aggregator",
+  "packageManager": "pnpm@10.30.3",
+  "scripts": {
+    "dev:indexer": "pnpm --filter wallet-indexer dev",
+    "dev:aggregator": "pnpm --filter wallet-aggregator dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
