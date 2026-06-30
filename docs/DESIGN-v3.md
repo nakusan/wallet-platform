@@ -966,7 +966,13 @@ indexer-arbitrum:
 | PriceService | `aggregator/src/services/price-service.ts` | ✅ |
 | Alchemy Normalization | `aggregator/src/providers/alchemy/normalize-activity.ts` | ✅ |
 | Balances / NFTs API | `aggregator/src/api/routes/balances.ts`, `nfts.ts` | ✅ |
-| 内部事件 | `aggregator/src/api/internal/events.ts` | ❌ 占位（Webhook） |
+| 内部事件 | `aggregator/src/api/internal/events.ts` | ✅ ChainEventConsumer |
+| Webhook AddressIndex | `aggregator/src/webhook/address-index.ts` | ✅ |
+| Webhook SubscriptionManager | `aggregator/src/webhook/subscription-manager.ts` | ✅ |
+| Webhook Dispatcher | `aggregator/src/webhook/dispatcher.ts` | ✅ |
+| Webhook RetryWorker | `aggregator/src/webhook/retry-worker.ts` | ✅ |
+| Webhook CRUD API | `aggregator/src/api/routes/webhooks.ts` | ✅ |
+| Alchemy Notify | `aggregator/src/api/internal/alchemy-notify.ts` | ✅ |
 
 ---
 
@@ -974,7 +980,7 @@ indexer-arbitrum:
 
 > **状态图例**：✅ 已完成 · ⚠️ 部分完成 · ❌ 未实现
 >
-> **最后对照代码库**：2026-06-26
+> **最后对照代码库**：2026-06-30
 
 ### 10.1 Indexer 未完成项
 
@@ -997,14 +1003,14 @@ indexer-arbitrum:
 | ID | 优先级 | 任务 | 目标路径 / 说明 | 状态 |
 |----|--------|------|-----------------|------|
 | A-01 | P0 | **修复 api_keys migration** | `aggregator/migrations/002_api_keys_extend.sql` 增加 `is_active`, `expires_at`, `last_used_at` | ✅ |
-| A-02 | P0 | **Webhook Dispatcher** | `aggregator/src/webhook/dispatcher.ts` | ❌ |
-| A-03 | P0 | ChainEventConsumer 匹配订阅并投递 | 改造 `api/internal/events.ts` | ❌ |
-| A-04 | P0 | Webhook 订阅 CRUD API | `api/routes/webhooks.ts` | ❌ |
-| A-05 | P0 | AddressIndex（Redis） | `aggregator/src/webhook/address-index.ts` | ❌ |
-| A-06 | P0 | 订阅变更同步 Indexer watch-addresses | `webhook/subscription-manager.ts` | ❌ |
+| A-02 | P0 | **Webhook Dispatcher** | `aggregator/src/webhook/dispatcher.ts` | ✅ |
+| A-03 | P0 | ChainEventConsumer 匹配订阅并投递 | `webhook/chain-event-consumer.ts` + `api/internal/events.ts` | ✅ |
+| A-04 | P0 | Webhook 订阅 CRUD API | `api/routes/webhooks.ts` | ✅ |
+| A-05 | P0 | AddressIndex（Redis） | `aggregator/src/webhook/address-index.ts` | ✅ |
+| A-06 | P0 | 订阅变更同步 Indexer watch-addresses | `webhook/subscription-manager.ts` | ✅ |
 | A-07 | P1 | **AlchemyProvider** | `providers/alchemy/alchemy-provider.ts` | ✅ |
 | A-08 | P1 | Alchemy Normalization | `providers/alchemy/normalize-activity.ts` | ✅ |
-| A-09 | P1 | Alchemy Notify 接收 | `api/internal/alchemy-notify.ts` | ❌ |
+| A-09 | P1 | Alchemy Notify 接收 | `api/internal/alchemy-notify.ts` | ✅ |
 | A-10 | P1 | **CoinGecko PriceService** | `services/price-service.ts` | ✅ |
 | A-11 | P1 | `token_price_sources` migration | `aggregator/migrations/003_token_prices.sql` | ✅ |
 | A-12 | P1 | Portfolio `totalValueUsd` / `chainTotalUsd` | `portfolio-service.ts` | ✅ |
@@ -1013,10 +1019,10 @@ indexer-arbitrum:
 | A-15 | P2 | `ChainProvider.getNfts()` | `chain-provider.ts` + Indexer/Alchemy Provider | ✅ |
 | A-16 | P2 | `CanonicalNftPage` 类型 | `shared/canonical/src/nfts.ts` | ✅ |
 | A-17 | P2 | 跨链 Activity 正确多路归并 cursor | `activity-service.ts` + `activity-cursor.ts` | ✅ |
-| A-18 | P2 | Webhook RetryWorker 后台任务 | `webhook/retry-worker.ts` | ❌ |
+| A-18 | P2 | Webhook RetryWorker 后台任务 | `webhook/retry-worker.ts` | ✅ |
 | A-19 | P2 | `GET /metrics` | `api/routes/metrics.ts` | ❌ |
 | A-20 | P3 | `chain_provider_config` DB 表（可选） | migration + 配置加载 | ❌ |
-| A-21 | P3 | Webhook delivery 查询 + test 端点 | `api/routes/webhooks.ts` | ❌ |
+| A-21 | P3 | Webhook delivery 查询 + test 端点 | `api/routes/webhooks.ts` | ✅ |
 
 ### 10.3 跨工程 / 质量
 
@@ -1075,16 +1081,19 @@ flowchart TD
 5. **占位文件**：`nft-metadata-worker.ts` 应替换为真实逻辑，勿另起平行实现（`tx-enrichment-worker.ts` 已实现）。
 6. **完成后**：更新本文档 §10 对应项状态，并在 PR 描述中引用任务 ID（如 `I-01`）。
 
-### 10.6 Aggregator 实现说明（2026-06-26 迭代）
+### 10.6 Aggregator 实现说明（2026-06-30 迭代）
 
-**已实现（本轮）**：A-01、A-07～A-08、A-10～A-17；Portfolio 计价、跨链 Activity、Alchemy Provider、CoinGecko PriceService、balances/nfts 公网 API。
+**已实现（本轮）**：A-02～A-06、A-09、A-18、A-21 — Webhook 全链路（订阅 CRUD、AddressIndex、Indexer watch-addresses 同步、ChainEventConsumer、HMAC 投递、重试、Alchemy Notify）。
 
-**刻意延后（Webhook 链路）**：A-02～A-06、A-09、A-18、A-21。
+**刻意延后**：A-19（`/metrics`）、A-20（`chain_provider_config` DB）、X-01（端到端集成测试）。
 
 **与设计差异 / 原型限制（需后续讨论）**：
 
 | 项 | 说明 |
 |----|------|
+| Webhook 签名头 | 设计 §4.5 为 `X-Webhook-Signature`；实现为 HMAC-SHA256 hex 摘要（无 `sha256=` 前缀） |
+| Alchemy Notify 验签 | 生产需配置 `ALCHEMY_WEBHOOK_SIGNING_KEY`；开发环境未配置时跳过验签 |
+| Alchemy Notify 归一化 | `normalize-notify.ts` 按 from/to 各生成一条 `activity_created` 事件（与 Indexer participant 模型对齐） |
 | 计价字段 | 设计 §5.5 未单独定义 `valueUsd`；已在 `shared/canonical/src/portfolio.ts` 增加 `PricedNativeBalance` / `PricedTokenBalance` |
 | 跨链 Activity cursor | 采用 **per-chain provider cursor + buffer 余量**（`GlobalActivityCursor`），而非设计示例的 `items[]` 水印；语义等价但 JSON 结构不同 |
 | Alchemy Activity 分页 | 入/出方向各调一次 `getAssetTransfers`，`pageKey` 不互通；多链混用 Indexer `{blockNumber,txHash}` 与 Alchemy `pageKey` cursor |

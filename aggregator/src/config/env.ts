@@ -23,6 +23,10 @@ const envSchema = z.object({
   CHAINS_JSON: z.string().default('{}'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   LOG_FILE: z.string().min(1).optional(),
+  WEBHOOK_DELIVERY_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  WEBHOOK_MAX_RETRIES: z.coerce.number().int().positive().default(5),
+  WEBHOOK_RETRY_INTERVAL_MS: z.coerce.number().int().positive().default(30_000),
+  ALCHEMY_WEBHOOK_SIGNING_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

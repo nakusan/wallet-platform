@@ -55,6 +55,15 @@ export class IndexerProvider implements ChainProvider {
     return res.json() as Promise<CanonicalActivityPage>;
   }
 
+  async syncWatchAddresses(addresses: string[]): Promise<void> {
+    const res = await fetch(`${this.endpoint}/internal/v1/watch-addresses/sync`, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({ addresses }),
+    });
+    if (!res.ok) throw new Error(`indexer watch-addresses sync ${res.status}`);
+  }
+
   async health(): Promise<ProviderHealth> {
     const start = Date.now();
     try {

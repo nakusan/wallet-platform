@@ -13,12 +13,15 @@ import { ActivityService } from '../services/activity-service.js';
 import { PriceService } from '../services/price-service.js';
 import { BalancesService } from '../services/balances-service.js';
 import { NftsService } from '../services/nfts-service.js';
+import { createWebhookServices } from '../webhook/index.js';
 import { authRouter } from './routes/auth.js';
 import { portfolioRouter } from './routes/portfolio.js';
 import { activityRouter } from './routes/activity.js';
 import { balancesRouter } from './routes/balances.js';
 import { nftsRouter } from './routes/nfts.js';
+import { webhooksRouter } from './routes/webhooks.js';
 import { internalEventsRouter } from './internal/events.js';
+import { alchemyNotifyRouter } from './internal/alchemy-notify.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 function parseCorsOrigins(raw: string | undefined): string[] {
@@ -39,9 +42,15 @@ export function buildAggregatorApp(pool: Pool, redis: Redis, env: Env): express.
     },
   }));
   app.use(pinoHttp({ logger }));
-  app.use(express.json({ limit: env.JSON_BODY_LIMIT }));
 
   const router = buildProviderRouter(loadChainProviders());
+  const webhookServices = createWebhookServices(pool, redis, env);
+
+  // Alchemy Notify 需要 raw body 验签，须在 express.json 之前挂载
+  app.use('/internal/v1', alchemyNotifyRouter(env, webhookServices.consumer));
+
+  app.use(express.json({ limit: env.JSON_BODY_LIMIT }));
+
   const priceService = new PriceService(pool, redis);
   const portfolioService = new PortfolioService(router, priceService);
   const balancesService = new BalancesService(router, priceService);
@@ -69,7 +78,15 @@ export function buildAggregatorApp(pool: Pool, redis: Redis, env: Env): express.
   app.use('/v1', balancesRouter(balancesService, redis));
   app.use('/v1', nftsRouter(nftsService, redis));
   app.use('/v1', activityRouter(activityService, redis));
-  app.use('/internal/v1', internalEventsRouter(env));
+  app.use('/v1', webhooksRouter(
+    webhookServices.subscriptionManager,
+    webhookServices.dispatcher,
+    pool,
+    redis,
+  ));
+  app.use('/internal/v1', internalEventsRouter(env, webhookServices.consumer));
+
+  app.locals.webhookServices = webhookServices;
 
   app.use(errorHandler);
   return app;

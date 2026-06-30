@@ -63,4 +63,6 @@ export const CacheKeys = {
   nativeBalance: (chainId: number, addr: string) =>
     `native:${chainId}:${addr.toLowerCase()}`,
   jwtRevoked: (jti: string) => `jwt:revoked:${jti}`,
+  webhookAddress: (chainId: number, addr: string) =>
+    `wh:addr:${chainId}:${addr.toLowerCase()}`,
 } as const;
