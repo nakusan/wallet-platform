@@ -127,7 +127,7 @@ export async function createToken(pool: Pool, rawKey: string): Promise<string | 
   const keyHash = hashApiKey(rawKey);
 
   const { rows } = await pool.query(
-    `SELECT id, scopes, rate_limit, expires_at
+    `SELECT id, scopes, rate_limit
      FROM api_keys
      WHERE key_hash=$1 AND is_active=true`,
     [keyHash],
@@ -135,7 +135,6 @@ export async function createToken(pool: Pool, rawKey: string): Promise<string | 
   if (rows.length === 0) return null;
 
   const key = rows[0];
-  if (key.expires_at && new Date(key.expires_at) < new Date()) return null;
 
   const { v4: uuidv4 } = await import('uuid');
   const payload: JwtPayload = {
@@ -146,11 +145,6 @@ export async function createToken(pool: Pool, rawKey: string): Promise<string | 
   };
 
   const token = jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_TTL_SECONDS });
-
-  await pool.query(
-    `UPDATE api_keys SET last_used_at=NOW() WHERE id=$1`,
-    [key.id],
-  );
 
   return token;
 }
