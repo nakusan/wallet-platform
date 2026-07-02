@@ -2,3 +2,4 @@ packages:
   - 'indexer'
   - 'aggregator'
   - 'shared/canonical'
+  - 'client'
