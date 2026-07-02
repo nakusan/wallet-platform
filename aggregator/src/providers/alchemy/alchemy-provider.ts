@@ -69,7 +69,7 @@ export class AlchemyProvider implements ChainProvider {
 
     const [nativeHex, tokenResult] = await Promise.all([
       this.rpc<string>('eth_getBalance', [addr, 'latest']),
-      this.rpc<TokenBalanceResult>('alchemy_getTokenBalances', [addr, { type: 'erc20' }]),
+      this.rpc<TokenBalanceResult>('alchemy_getTokenBalances', [addr, 'erc20']),
     ]);
 
     const nativeRaw = BigInt(nativeHex).toString();
